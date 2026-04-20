@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MQ2 Monitor</title>
+<script src="/socket.io/socket.io.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI';
+  background: linear-gradient(135deg, #1f4037, #99f2c8);
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 30px;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  padding: 30px;
+  border-radius: 20px;
+  width: 250px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+.value {
+  font-size: 2.5rem;
+  margin: 10px 0;
+}
+
+.safe { color: #00ffcc; }
+.danger { color: red; }
+</style>
+</head>
+
+<body>
+
+<h1>🔥 MQ2 Gas Monitoring System</h1>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Analog (A0)</h2>
+    <div id="a0" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <h2>Digital (D0)</h2>
+    <div id="d0" class="value">--</div>
+    <div id="status">Checking...</div>
+  </div>
+
+</div>
+
+<script>
+const socket = io();
+
+socket.on("sensorData", (data) => {
+  document.getElementById("a0").innerText = data.a0;
+  document.getElementById("d0").innerText = data.d0;
+
+  let status = document.getElementById("status");
+
+  if (data.d0 === 1) {
+    status.innerText = "Gas Detected 🚨";
+    status.className = "danger";
+  } else {
+    status.innerText = "Safe ✅";
+    status.className = "safe";
+  }
+});
+</script>
+
+</body>
+</html>
