@@ -21,8 +21,8 @@ body {
 
 h1 {
   padding: 20px;
-  color: #ff3b3b;
-  text-shadow: 0 0 10px red;
+  color: red;
+  text-shadow: 0 0 15px red;
 }
 
 .container {
@@ -34,15 +34,10 @@ h1 {
 
 .card {
   background: #111;
-  border: 1px solid #ff3b3b;
+  border: 1px solid red;
   border-radius: 15px;
   padding: 25px;
-  box-shadow: 0 0 10px rgba(255,0,0,0.3);
-  transition: 0.3s;
-}
-
-.card:hover {
-  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255,0,0,0.3);
 }
 
 .value {
@@ -51,20 +46,16 @@ h1 {
 }
 
 /* Status styles */
-.normal {
-  color: #00ff88;
-}
-
+.normal { color: #00ff88; }
 .gas {
   color: orange;
   animation: pulse 1s infinite;
 }
-
 .fire {
   color: red;
   font-weight: bold;
-  animation: blink 0.8s infinite;
-  text-shadow: 0 0 20px red;
+  animation: blink 0.7s infinite;
+  text-shadow: 0 0 25px red;
 }
 
 @keyframes blink {
@@ -77,7 +68,7 @@ h1 {
 </style>
 </head>
 
-<body>
+<body onclick="unlockAudio()">
 
 <h1>🚨 FIRE & GAS ALARM SYSTEM 🚨</h1>
 
@@ -89,8 +80,8 @@ h1 {
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<!-- 🚨 Siren -->
-<audio id="siren" src="https://www.soundjay.com/misc/sounds/siren.wav"></audio>
+<!-- 🔊 Siren -->
+<audio id="siren" src="https://www.soundjay.com/misc/sounds/siren.wav" preload="auto"></audio>
 
 <script>
 const firebaseConfig = {
@@ -106,11 +97,28 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let prevTemp = 0;
+let audioUnlocked = false;
+
+// 🔓 Unlock audio (required once)
+function unlockAudio() {
+  if (!audioUnlocked) {
+    const siren = document.getElementById("siren");
+
+    siren.play().then(() => {
+      siren.pause();
+      siren.currentTime = 0;
+      audioUnlocked = true;
+
+      console.log("🔊 Audio unlocked");
+    }).catch(() => {});
+  }
+}
 
 db.ref("sensor").on("value", (snapshot) => {
   const data = snapshot.val();
   if (!data) return;
+
+  console.log("DATA:", data);
 
   document.getElementById("mq2_1").innerText = data.mq2_1;
   document.getElementById("mq2_2").innerText = data.mq2_2;
@@ -120,23 +128,41 @@ db.ref("sensor").on("value", (snapshot) => {
   let statusEl = document.getElementById("status");
   let siren = document.getElementById("siren");
 
-  if ((data.temp > prevTemp + 2) && (data.mq2_1 > 650)) {
+  // 🔥 FIRE (highest priority)
+  if (data.temp >= 40 && data.mq2_1 >= 550) {
+
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
-    siren.play();
+
+    siren.loop = true;
+
+    if (audioUnlocked) {
+      siren.play().catch(() => {});
+    }
   }
-  else if (data.mq2_1 > 600) {
+
+  // ⚠ GAS
+  else if (data.mq2_1 >= 500) {
+
     statusEl.innerText = "⚠ GAS LEAK";
     statusEl.className = "value gas";
+
+    siren.loop = true;
+
+    if (audioUnlocked) {
+      siren.play().catch(() => {});
+    }
   }
+
+  // ✅ NORMAL
   else {
+
     statusEl.innerText = "✅ NORMAL";
     statusEl.className = "value normal";
+
     siren.pause();
     siren.currentTime = 0;
   }
-
-  prevTemp = data.temp;
 });
 </script>
 
