@@ -25,6 +25,18 @@ h1 {
   text-shadow: 0 0 15px red;
 }
 
+/* 🔊 Button */
+button {
+  padding: 12px 20px;
+  background: red;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
 .container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -45,12 +57,13 @@ h1 {
   margin-top: 10px;
 }
 
-/* Status styles */
 .normal { color: #00ff88; }
+
 .gas {
   color: orange;
   animation: pulse 1s infinite;
 }
+
 .fire {
   color: red;
   font-weight: bold;
@@ -68,9 +81,12 @@ h1 {
 </style>
 </head>
 
-<body onclick="unlockAudio()">
+<body>
 
 <h1>🚨 FIRE & GAS ALARM SYSTEM 🚨</h1>
+
+<!-- 🔊 SOUND BUTTON -->
+<button onclick="unlockAudio()">🔊 ENABLE ALARM SOUND</button>
 
 <div class="container">
   <div class="card"><h3>MQ2 Sensor 1</h3><div id="mq2_1" class="value">--</div></div>
@@ -99,19 +115,21 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
-// 🔓 Unlock audio (required once)
+// 🔓 Unlock audio
 function unlockAudio() {
-  if (!audioUnlocked) {
-    const siren = document.getElementById("siren");
+  const siren = document.getElementById("siren");
 
-    siren.play().then(() => {
-      siren.pause();
-      siren.currentTime = 0;
-      audioUnlocked = true;
+  siren.play().then(() => {
+    siren.pause();
+    siren.currentTime = 0;
 
-      console.log("🔊 Audio unlocked");
-    }).catch(() => {});
-  }
+    audioUnlocked = true;
+
+    alert("✅ Sound Enabled!");
+    console.log("🔊 Audio unlocked");
+  }).catch(() => {
+    alert("❌ Click again");
+  });
 }
 
 db.ref("sensor").on("value", (snapshot) => {
@@ -128,28 +146,28 @@ db.ref("sensor").on("value", (snapshot) => {
   let statusEl = document.getElementById("status");
   let siren = document.getElementById("siren");
 
-  // 🔥 FIRE (highest priority)
-  if (data.temp >= 40 && data.mq2_1 >= 550) {
+  let gas = Math.max(data.mq2_1, data.mq2_2);
+
+  // 🔥 FIRE
+  if (data.temp >= 40 && gas >= 550) {
 
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
 
-    siren.loop = true;
-
     if (audioUnlocked) {
+      siren.loop = true;
       siren.play().catch(() => {});
     }
   }
 
   // ⚠ GAS
-  else if (data.mq2_1 >= 500) {
+  else if (gas >= 500) {
 
     statusEl.innerText = "⚠ GAS LEAK";
     statusEl.className = "value gas";
 
-    siren.loop = true;
-
     if (audioUnlocked) {
+      siren.loop = true;
       siren.play().catch(() => {});
     }
   }
