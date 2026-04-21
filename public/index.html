@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>🔥 Smart Fire & Gas Monitor</title>
-<script src="/socket.io/socket.io.js"></script>
+<meta charset="UTF-8">
+<title>🔥 Smart Fire & Gas Monitoring</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 body {
   margin: 0;
-  font-family: 'Segoe UI';
+  font-family: 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #141e30, #243b55);
   color: white;
   text-align: center;
@@ -39,10 +43,11 @@ h1 {
 
 .status {
   margin-top: 15px;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: bold;
 }
 
+/* Status Colors */
 .normal { color: #00ffcc; }
 .gas { color: orange; }
 .fire { color: red; animation: blink 1s infinite; }
@@ -92,24 +97,35 @@ h1 {
 </div>
 
 <script>
-const socket = io();
+// 🔥 YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "fire-monitoring-bff33",  // 🔴 REPLACE THIS
+  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
 
-socket.on("sensorData", (data) => {
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 📡 Listen for LIVE data
+db.ref("sensor").on("value", (snapshot) => {
+  const data = snapshot.val();
+
+  if (!data) return;
+
   document.getElementById("mq2_1").innerText = data.mq2_1;
   document.getElementById("mq2_2").innerText = data.mq2_2;
-  document.getElementById("avgGas").innerText = data.avgGas;
+  document.getElementById("avgGas").innerText = data.avgGas || "--";
   document.getElementById("temp").innerText = data.temp + " °C";
   document.getElementById("hum").innerText = data.hum + " %";
 
   let statusEl = document.getElementById("status");
-
   statusEl.innerText = data.status;
 
   if (data.status === "NORMAL") {
     statusEl.className = "status normal";
   } else if (data.status === "GAS_LEAK") {
     statusEl.className = "status gas";
-  } else if (data.status === "FIRE") {
+  } else {
     statusEl.className = "status fire";
   }
 });
