@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🚨 Fire Alarm System</title>
+<title>🚨 Fire & Gas Alarm System</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -25,16 +24,13 @@ h1 {
   text-shadow: 0 0 15px red;
 }
 
-/* 🔊 Button */
 button {
   padding: 12px 20px;
   background: red;
   color: white;
   border: none;
   border-radius: 10px;
-  font-size: 16px;
   cursor: pointer;
-  margin-bottom: 10px;
 }
 
 .container {
@@ -54,7 +50,6 @@ button {
 
 .value {
   font-size: 2rem;
-  margin-top: 10px;
 }
 
 .normal { color: #00ff88; }
@@ -66,18 +61,12 @@ button {
 
 .fire {
   color: red;
-  font-weight: bold;
   animation: blink 0.7s infinite;
   text-shadow: 0 0 25px red;
 }
 
-@keyframes blink {
-  50% { opacity: 0.3; }
-}
-
-@keyframes pulse {
-  50% { transform: scale(1.1); }
-}
+@keyframes blink { 50% { opacity: 0.3; } }
+@keyframes pulse { 50% { transform: scale(1.1); } }
 </style>
 </head>
 
@@ -85,29 +74,22 @@ button {
 
 <h1>🚨 FIRE & GAS ALARM SYSTEM 🚨</h1>
 
-<!-- 🔊 SOUND BUTTON -->
-<button onclick="unlockAudio()">🔊 ENABLE ALARM SOUND</button>
+<button onclick="unlockAudio()">🔊 ENABLE SOUND</button>
 
 <div class="container">
-  <div class="card"><h3>MQ2 Sensor 1</h3><div id="mq2_1" class="value">--</div></div>
-  <div class="card"><h3>MQ2 Sensor 2</h3><div id="mq2_2" class="value">--</div></div>
-  <div class="card"><h3>Temperature</h3><div id="temp" class="value">--</div></div>
+  <div class="card"><h3>MQ2_1</h3><div id="mq2_1" class="value">--</div></div>
+  <div class="card"><h3>MQ2_2</h3><div id="mq2_2" class="value">--</div></div>
+  <div class="card"><h3>Temp</h3><div id="temp" class="value">--</div></div>
   <div class="card"><h3>Humidity</h3><div id="hum" class="value">--</div></div>
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<!-- 🔊 Siren -->
-<audio id="siren" src="https://www.soundjay.com/misc/sounds/siren.wav" preload="auto"></audio>
+<audio id="siren" src="https://www.soundjay.com/misc/sounds/siren.wav"></audio>
 
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBs9WUcCcdLB-9IlWa337lR4Z7H9WEy8D8",
-  authDomain: "fire-monitoring-bff33.firebaseapp.com",
-  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "fire-monitoring-bff33",
-  storageBucket: "fire-monitoring-bff33.appspot.com",
-  messagingSenderId: "523252997400",
-  appId: "1:523252997400:web:b9caca5d68a5ca5e96126d"
+  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -115,28 +97,27 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
-// 🔓 Unlock audio
 function unlockAudio() {
-  const siren = document.getElementById("siren");
+  let siren = document.getElementById("siren");
 
+  siren.muted = true;
   siren.play().then(() => {
     siren.pause();
     siren.currentTime = 0;
-
+    siren.muted = false;
     audioUnlocked = true;
 
-    alert("✅ Sound Enabled!");
-    console.log("🔊 Audio unlocked");
+    alert("✅ Sound Enabled");
   }).catch(() => {
     alert("❌ Click again");
   });
 }
 
-db.ref("sensor").on("value", (snapshot) => {
-  const data = snapshot.val();
+db.ref("sensor").on("value", (snap) => {
+  let data = snap.val();
   if (!data) return;
 
-  console.log("DATA:", data);
+  let gas = Math.max(data.mq2_1, data.mq2_2);
 
   document.getElementById("mq2_1").innerText = data.mq2_1;
   document.getElementById("mq2_2").innerText = data.mq2_2;
@@ -146,35 +127,30 @@ db.ref("sensor").on("value", (snapshot) => {
   let statusEl = document.getElementById("status");
   let siren = document.getElementById("siren");
 
-  let gas = Math.max(data.mq2_1, data.mq2_2);
-
   // 🔥 FIRE
-  if (data.temp >= 40 && gas >= 550) {
-
+  if (data.temp >= 40 && gas >= 600) {
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
 
     if (audioUnlocked) {
       siren.loop = true;
-      siren.play().catch(() => {});
+      siren.play().catch(()=>{});
     }
   }
 
   // ⚠ GAS
-  else if (gas >= 500) {
-
+  else if (gas >= 600) {
     statusEl.innerText = "⚠ GAS LEAK";
     statusEl.className = "value gas";
 
     if (audioUnlocked) {
       siren.loop = true;
-      siren.play().catch(() => {});
+      siren.play().catch(()=>{});
     }
   }
 
   // ✅ NORMAL
   else {
-
     statusEl.innerText = "✅ NORMAL";
     statusEl.className = "value normal";
 
