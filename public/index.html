@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>🔥 Smart Fire & Gas Monitoring</title>
 
-<!-- Firebase -->
+<!-- Firebase v8 (IMPORTANT) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -97,16 +97,22 @@ h1 {
 </div>
 
 <script>
-// 🔥 YOUR FIREBASE CONFIG
+// 🔥 Firebase Config (YOUR REAL CONFIG)
 const firebaseConfig = {
-  apiKey: "fire-monitoring-bff33",  // 🔴 REPLACE THIS
-  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
+  apiKey: "AIzaSyBs9WUcCcdLB-9IlWa337lR4Z7H9WEy8D8",
+  authDomain: "fire-monitoring-bff33.firebaseapp.com",
+  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fire-monitoring-bff33",
+  storageBucket: "fire-monitoring-bff33.firebasestorage.app",
+  messagingSenderId: "523252997400",
+  appId: "1:523252997400:web:b9caca5d68a5ca5e96126d"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 📡 Listen for LIVE data
+// 📡 Read LIVE data from Firebase
 db.ref("sensor").on("value", (snapshot) => {
   const data = snapshot.val();
 
