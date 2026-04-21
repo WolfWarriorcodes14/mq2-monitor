@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>🔥 Smart Fire & Gas Monitoring</title>
 
-<!-- Firebase -->
+<!-- Firebase v8 (IMPORTANT) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -15,6 +15,10 @@ body {
   background: linear-gradient(135deg, #141e30, #243b55);
   color: white;
   text-align: center;
+}
+
+h1 {
+  padding: 20px;
 }
 
 .container {
@@ -28,9 +32,18 @@ body {
   background: rgba(255,255,255,0.1);
   padding: 25px;
   border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.value { font-size: 2rem; }
+.value {
+  font-size: 2rem;
+  margin-top: 10px;
+}
+
+/* Status Colors */
+.normal { color: lightgreen; }
+.gas { color: orange; }
+.fire { color: red; }
 </style>
 </head>
 
@@ -39,26 +52,34 @@ body {
 <h1>🔥 Smart Fire & Gas Monitoring System</h1>
 
 <div class="container">
-  <div class="card"><h3>MQ2_1</h3><div id="mq2_1">--</div></div>
-  <div class="card"><h3>MQ2_2</h3><div id="mq2_2">--</div></div>
-  <div class="card"><h3>Temp</h3><div id="temp">--</div></div>
-  <div class="card"><h3>Humidity</h3><div id="hum">--</div></div>
-  <div class="card"><h3>Status</h3><div id="status">--</div></div>
+  <div class="card"><h3>MQ2 Sensor 1</h3><div id="mq2_1" class="value">--</div></div>
+  <div class="card"><h3>MQ2 Sensor 2</h3><div id="mq2_2" class="value">--</div></div>
+  <div class="card"><h3>Temperature</h3><div id="temp" class="value">--</div></div>
+  <div class="card"><h3>Humidity</h3><div id="hum" class="value">--</div></div>
+  <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
 <script>
 console.log("🔥 SCRIPT STARTED");
 
+// ✅ FULL Firebase Config (CORRECT)
 const firebaseConfig = {
   apiKey: "AIzaSyBs9WUcCcdLB-9IlWa337lR4Z7H9WEy8D8",
-  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
+  authDomain: "fire-monitoring-bff33.firebaseapp.com",
+  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "fire-monitoring-bff33",
+  storageBucket: "fire-monitoring-bff33.appspot.com",
+  messagingSenderId: "523252997400",
+  appId: "1:523252997400:web:b9caca5d68a5ca5e96126d"
 };
 
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 console.log("🔥 Firebase Initialized");
 
 const db = firebase.database();
 
+// Listen for realtime updates
 db.ref("sensor").on("value", (snapshot) => {
   const data = snapshot.val();
   console.log("📡 DATA:", data);
@@ -67,9 +88,16 @@ db.ref("sensor").on("value", (snapshot) => {
 
   document.getElementById("mq2_1").innerText = data.mq2_1;
   document.getElementById("mq2_2").innerText = data.mq2_2;
-  document.getElementById("temp").innerText = data.temp;
-  document.getElementById("hum").innerText = data.hum;
-  document.getElementById("status").innerText = data.status;
+  document.getElementById("temp").innerText = data.temp + " °C";
+  document.getElementById("hum").innerText = data.hum + " %";
+
+  let statusEl = document.getElementById("status");
+  statusEl.innerText = data.status;
+
+  // Color logic
+  if (data.status === "NORMAL") statusEl.className = "value normal";
+  else if (data.status === "GAS_LEAK") statusEl.className = "value gas";
+  else statusEl.className = "value fire";
 });
 </script>
 
