@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🚨 Fire & Gas Alarm System</title>
+<title>🚨 Fire Alarm System</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -14,15 +13,14 @@
 body {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
-  background: #0b0b0b;
+  background: #000;
   color: white;
   text-align: center;
 }
 
 h1 {
-  padding: 20px;
   color: red;
-  text-shadow: 0 0 15px red;
+  text-shadow: 0 0 20px red;
 }
 
 button {
@@ -32,7 +30,6 @@ button {
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  margin-bottom: 10px;
 }
 
 .container {
@@ -47,28 +44,26 @@ button {
   border: 1px solid red;
   border-radius: 15px;
   padding: 25px;
-  box-shadow: 0 0 15px rgba(255,0,0,0.3);
+  box-shadow: 0 0 15px rgba(255,0,0,0.4);
 }
 
 .value {
   font-size: 2rem;
 }
 
-.normal { color: #00ff88; }
-
-.gas {
-  color: orange;
-  animation: pulse 1s infinite;
-}
-
 .fire {
   color: red;
-  animation: blink 0.7s infinite;
-  text-shadow: 0 0 25px red;
+  animation: blink 0.6s infinite;
+  text-shadow: 0 0 30px red;
 }
 
-@keyframes blink { 50% { opacity: 0.3; } }
-@keyframes pulse { 50% { transform: scale(1.1); } }
+.normal {
+  color: #00ff88;
+}
+
+@keyframes blink {
+  50% { opacity: 0.3; }
+}
 </style>
 </head>
 
@@ -86,7 +81,7 @@ button {
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<!-- 🔊 LOCAL AUDIO -->
+<!-- 🔊 AUDIO -->
 <audio id="siren" src="alarm_clock.ogg" preload="auto"></audio>
 
 <script>
@@ -100,11 +95,11 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
-// 🔓 AUDIO UNLOCK (FINAL FIX)
+// 🔓 Unlock audio
 function unlockAudio() {
   const siren = document.getElementById("siren");
 
-  siren.muted = true;   // trick
+  siren.muted = true;
   siren.play().then(() => {
     siren.pause();
     siren.currentTime = 0;
@@ -112,13 +107,12 @@ function unlockAudio() {
 
     audioUnlocked = true;
     alert("✅ Sound Enabled");
-  }).catch((e) => {
-    console.log("Unlock error:", e);
+  }).catch(() => {
     alert("❌ Click again");
   });
 }
 
-// 🔄 REALTIME FIREBASE DATA
+// 🔥 FINAL CONDITION LOGIC
 db.ref("sensor").on("value", (snap) => {
   const data = snap.val();
   if (!data) return;
@@ -133,29 +127,16 @@ db.ref("sensor").on("value", (snap) => {
   const statusEl = document.getElementById("status");
   const siren = document.getElementById("siren");
 
-  // 🔥 FIRE
-  if (data.temp >= 40 && gas >= 600) {
+  // 🔥 FIRE ONLY WHEN BOTH CONDITIONS TRUE
+  if (data.temp >= 35 && gas >= 600) {
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
 
     if (audioUnlocked && siren.paused) {
       siren.loop = true;
-      siren.play().catch(e => console.log("Play error:", e));
+      siren.play().catch(() => console.log("Play error"));
     }
-  }
-
-  // ⚠ GAS
-  else if (gas >= 600) {
-    statusEl.innerText = "⚠ GAS LEAK";
-    statusEl.className = "value gas";
-
-    if (audioUnlocked && siren.paused) {
-      siren.loop = true;
-      siren.play().catch(e => console.log("Play error:", e));
-    }
-  }
-
-  // ✅ NORMAL
+  } 
   else {
     statusEl.innerText = "✅ NORMAL";
     statusEl.className = "value normal";
