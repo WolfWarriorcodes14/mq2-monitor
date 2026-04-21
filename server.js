@@ -1,45 +1,36 @@
-// ===== IMPORTS =====
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const { SerialPort } = require("serialport");
-const { ReadlineParser } = require("@serialport/parser-readline");
 
-// ===== SETUP =====
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// ===== CONFIG =====
-const SERIAL_PORT = "/dev/ttyACM0"; // Ubuntu
-const BAUD_RATE = 9600;
-const PORT = 3000;
-
-// ===== SERIAL =====
-const port = new SerialPort({
-  path: SERIAL_PORT,
-  baudRate: BAUD_RATE,
-});
-
-const parser = port.pipe(new ReadlineParser({ delimiter: "\r\n" }));
-
-// ===== STATIC =====
 app.use(express.static("public"));
 
-// ===== READ JSON DATA =====
-parser.on("data", (data) => {
-  try {
-    const jsonData = JSON.parse(data);
+// 🔥 Temporary dummy data (for cloud)
+setInterval(() => {
+  const a0 = Math.floor(Math.random() * 800);
+  const temp = (25 + Math.random() * 10).toFixed(1);
+  const hum = (50 + Math.random() * 20).toFixed(1);
 
-    io.emit("sensorData", jsonData);
+  let status = "NORMAL";
+  if (a0 > 500) status = "GAS_LEAK";
+  if (a0 > 650) status = "FIRE";
 
-    console.log("📡", jsonData);
-  } catch (err) {
-    console.log("⚠ Invalid JSON:", data);
-  }
-});
+  io.emit("sensorData", {
+    mq2_1: a0,
+    mq2_2: a0 - 50,
+    avgGas: a0,
+    temp: temp,
+    hum: hum,
+    status: status
+  });
 
-// ===== START =====
+}, 2000);
+
+const PORT = process.env.PORT || 3000;
+
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log("🚀 Server running on port", PORT);
 });
