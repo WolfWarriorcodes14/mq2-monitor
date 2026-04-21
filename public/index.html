@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>🚨 Fire & Gas Alarm System</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -14,7 +15,7 @@ body {
   margin: 0;
   font-family: 'Orbitron', sans-serif;
   background: #0b0b0b;
-  color: #fff;
+  color: white;
   text-align: center;
 }
 
@@ -31,6 +32,7 @@ button {
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  margin-bottom: 10px;
 }
 
 .container {
@@ -79,12 +81,13 @@ button {
 <div class="container">
   <div class="card"><h3>MQ2_1</h3><div id="mq2_1" class="value">--</div></div>
   <div class="card"><h3>MQ2_2</h3><div id="mq2_2" class="value">--</div></div>
-  <div class="card"><h3>Temp</h3><div id="temp" class="value">--</div></div>
+  <div class="card"><h3>Temperature</h3><div id="temp" class="value">--</div></div>
   <div class="card"><h3>Humidity</h3><div id="hum" class="value">--</div></div>
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<audio id="siren" src="https://www.soundjay.com/misc/sounds/siren.wav"></audio>
+<!-- 🔊 LOCAL AUDIO FILE -->
+<audio id="siren" src="alarm_clock.ogg" preload="auto"></audio>
 
 <script>
 const firebaseConfig = {
@@ -97,37 +100,38 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
+// 🔓 UNLOCK AUDIO (WORKS)
 function unlockAudio() {
-  let siren = document.getElementById("siren");
+  const siren = document.getElementById("siren");
 
-  siren.muted = true;
   siren.play().then(() => {
     siren.pause();
     siren.currentTime = 0;
-    siren.muted = false;
     audioUnlocked = true;
 
     alert("✅ Sound Enabled");
-  }).catch(() => {
-    alert("❌ Click again");
+  }).catch((e) => {
+    console.log(e);
+    alert("❌ Audio failed");
   });
 }
 
+// 🔄 REALTIME DATA
 db.ref("sensor").on("value", (snap) => {
-  let data = snap.val();
+  const data = snap.val();
   if (!data) return;
 
-  let gas = Math.max(data.mq2_1, data.mq2_2);
+  const gas = Math.max(data.mq2_1, data.mq2_2);
 
   document.getElementById("mq2_1").innerText = data.mq2_1;
   document.getElementById("mq2_2").innerText = data.mq2_2;
   document.getElementById("temp").innerText = data.temp + " °C";
   document.getElementById("hum").innerText = data.hum + " %";
 
-  let statusEl = document.getElementById("status");
-  let siren = document.getElementById("siren");
+  const statusEl = document.getElementById("status");
+  const siren = document.getElementById("siren");
 
-  // 🔥 FIRE
+  // 🔥 FIRE CONDITION
   if (data.temp >= 40 && gas >= 600) {
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
@@ -138,7 +142,7 @@ db.ref("sensor").on("value", (snap) => {
     }
   }
 
-  // ⚠ GAS
+  // ⚠ GAS CONDITION
   else if (gas >= 600) {
     statusEl.innerText = "⚠ GAS LEAK";
     statusEl.className = "value gas";
