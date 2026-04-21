@@ -1,20 +1,15 @@
 {
   "name": "mq2-monitor",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "MQ2 Firebase Monitoring",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@serialport/parser-readline": "^13.0.0",
-    "express": "^5.2.1",
-    "firebase-admin": "^13.8.0",
-    "serialport": "^13.0.0",
-    "socket.io": "^4.8.3"
+    "express": "^4.18.2"
   }
 }

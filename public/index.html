@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>🔥 Smart Fire & Gas Monitoring</title>
 
-<!-- Firebase v8 (IMPORTANT) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -15,10 +15,6 @@ body {
   background: linear-gradient(135deg, #141e30, #243b55);
   color: white;
   text-align: center;
-}
-
-h1 {
-  margin-top: 20px;
 }
 
 .container {
@@ -32,29 +28,9 @@ h1 {
   background: rgba(255,255,255,0.1);
   padding: 25px;
   border-radius: 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
 }
 
-.value {
-  font-size: 2rem;
-  margin-top: 10px;
-}
-
-.status {
-  margin-top: 15px;
-  font-size: 1.3rem;
-  font-weight: bold;
-}
-
-/* Status Colors */
-.normal { color: #00ffcc; }
-.gas { color: orange; }
-.fire { color: red; animation: blink 1s infinite; }
-
-@keyframes blink {
-  50% { opacity: 0.4; }
-}
+.value { font-size: 2rem; }
 </style>
 </head>
 
@@ -63,73 +39,38 @@ h1 {
 <h1>🔥 Smart Fire & Gas Monitoring System</h1>
 
 <div class="container">
-
-  <div class="card">
-    <h3>MQ2 Sensor 1</h3>
-    <div id="mq2_1" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <h3>MQ2 Sensor 2</h3>
-    <div id="mq2_2" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <h3>Average Gas</h3>
-    <div id="avgGas" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <h3>Temperature</h3>
-    <div id="temp" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <h3>Humidity</h3>
-    <div id="hum" class="value">--</div>
-  </div>
-
-  <div class="card">
-    <h3>Status</h3>
-    <div id="status" class="status">--</div>
-  </div>
-
+  <div class="card"><h3>MQ2_1</h3><div id="mq2_1">--</div></div>
+  <div class="card"><h3>MQ2_2</h3><div id="mq2_2">--</div></div>
+  <div class="card"><h3>Temp</h3><div id="temp">--</div></div>
+  <div class="card"><h3>Humidity</h3><div id="hum">--</div></div>
+  <div class="card"><h3>Status</h3><div id="status">--</div></div>
 </div>
 
 <script>
-console.log("🔥 Script Loaded");
+console.log("🔥 SCRIPT STARTED");
 
-// Wait for page to load
-window.onload = function () {
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyBs9WUcCcdLB-9IlWa337lR4Z7H9WEy8D8",
-    databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-
-  console.log("🔥 Firebase Initialized");
-
-  db.ref("sensor").on("value", (snapshot) => {
-    const data = snapshot.val();
-
-    console.log("📡 Data received:", data);
-
-    if (!data) return;
-
-    document.getElementById("mq2_1").innerText = data.mq2_1;
-    document.getElementById("mq2_2").innerText = data.mq2_2;
-    document.getElementById("avgGas").innerText = "--";
-    document.getElementById("temp").innerText = data.temp + " °C";
-    document.getElementById("hum").innerText = data.hum + " %";
-
-    let s = document.getElementById("status");
-    s.innerText = data.status;
-  });
-
+const firebaseConfig = {
+  apiKey: "AIzaSyBs9WUcCcdLB-9IlWa337lR4Z7H9WEy8D8",
+  databaseURL: "https://fire-monitoring-bff33-default-rtdb.asia-southeast1.firebasedatabase.app"
 };
+
+firebase.initializeApp(firebaseConfig);
+console.log("🔥 Firebase Initialized");
+
+const db = firebase.database();
+
+db.ref("sensor").on("value", (snapshot) => {
+  const data = snapshot.val();
+  console.log("📡 DATA:", data);
+
+  if (!data) return;
+
+  document.getElementById("mq2_1").innerText = data.mq2_1;
+  document.getElementById("mq2_2").innerText = data.mq2_2;
+  document.getElementById("temp").innerText = data.temp;
+  document.getElementById("hum").innerText = data.hum;
+  document.getElementById("status").innerText = data.status;
+});
 </script>
 
 </body>
