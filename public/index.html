@@ -2,10 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>🚨 Fire Alarm System</title>
+<title>🚨 Fire & Gas Monitor</title>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
 
@@ -24,7 +28,7 @@ h1 {
 }
 
 button {
-  padding: 12px 20px;
+  padding: 10px 20px;
   background: red;
   color: white;
   border: none;
@@ -36,15 +40,14 @@ button {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
-  padding: 30px;
+  padding: 20px;
 }
 
 .card {
   background: #111;
   border: 1px solid red;
   border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 0 15px rgba(255,0,0,0.4);
+  padding: 20px;
 }
 
 .value {
@@ -54,7 +57,6 @@ button {
 .fire {
   color: red;
   animation: blink 0.6s infinite;
-  text-shadow: 0 0 30px red;
 }
 
 .normal {
@@ -64,25 +66,32 @@ button {
 @keyframes blink {
   50% { opacity: 0.3; }
 }
+
+canvas {
+  max-width: 90%;
+  margin: 20px auto;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🚨 FIRE & GAS ALARM SYSTEM 🚨</h1>
+<h1>🚨 FIRE & GAS MONITOR 🚨</h1>
 
 <button onclick="unlockAudio()">🔊 ENABLE SOUND</button>
 
 <div class="container">
   <div class="card"><h3>MQ2_1</h3><div id="mq2_1" class="value">--</div></div>
   <div class="card"><h3>MQ2_2</h3><div id="mq2_2" class="value">--</div></div>
-  <div class="card"><h3>Temperature</h3><div id="temp" class="value">--</div></div>
+  <div class="card"><h3>Temp</h3><div id="temp" class="value">--</div></div>
   <div class="card"><h3>Humidity</h3><div id="hum" class="value">--</div></div>
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<!-- 🔊 AUDIO -->
-<audio id="siren" src="alarm_clock.ogg" preload="auto"></audio>
+<!-- 📊 GRAPH -->
+<canvas id="chart"></canvas>
+
+<audio id="siren" src="alarm_clock.ogg"></audio>
 
 <script>
 const firebaseConfig = {
@@ -95,57 +104,97 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
-// 🔓 Unlock audio
+// 🔓 SOUND
 function unlockAudio() {
-  const siren = document.getElementById("siren");
-
-  siren.muted = true;
-  siren.play().then(() => {
-    siren.pause();
-    siren.currentTime = 0;
-    siren.muted = false;
-
+  let s = document.getElementById("siren");
+  s.muted = true;
+  s.play().then(() => {
+    s.pause();
+    s.currentTime = 0;
+    s.muted = false;
     audioUnlocked = true;
     alert("✅ Sound Enabled");
-  }).catch(() => {
-    alert("❌ Click again");
   });
 }
 
-// 🔥 FINAL CONDITION LOGIC
+// 📊 CHART SETUP
+const ctx = document.getElementById('chart').getContext('2d');
+
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Temperature",
+        data: [],
+        borderWidth: 2
+      },
+      {
+        label: "Gas",
+        data: [],
+        borderWidth: 2
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+// 🔥 DATA
 db.ref("sensor").on("value", (snap) => {
   const data = snap.val();
   if (!data) return;
 
-  const gas = Math.max(data.mq2_1, data.mq2_2);
+  // calibration
+  const mq1 = Math.max(0, data.mq2_1 - 80);
+  const mq2 = data.mq2_2;
+  const gas = Math.max(mq1, mq2);
 
-  document.getElementById("mq2_1").innerText = data.mq2_1;
-  document.getElementById("mq2_2").innerText = data.mq2_2;
+  // UI update
+  document.getElementById("mq2_1").innerText = mq1;
+  document.getElementById("mq2_2").innerText = mq2;
   document.getElementById("temp").innerText = data.temp + " °C";
   document.getElementById("hum").innerText = data.hum + " %";
 
   const statusEl = document.getElementById("status");
   const siren = document.getElementById("siren");
 
-  // 🔥 FIRE ONLY WHEN BOTH CONDITIONS TRUE
+  // 🔥 FIRE LOGIC
   if (data.temp >= 35 && gas >= 600) {
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
 
     if (audioUnlocked && siren.paused) {
       siren.loop = true;
-      siren.play().catch(() => console.log("Play error"));
+      siren.play();
     }
-  } 
-  else {
+  } else {
     statusEl.innerText = "✅ NORMAL";
     statusEl.className = "value normal";
 
-    if (!siren.paused) {
-      siren.pause();
-      siren.currentTime = 0;
-    }
+    siren.pause();
+    siren.currentTime = 0;
   }
+
+  // 📊 UPDATE GRAPH
+  const time = new Date().toLocaleTimeString();
+
+  chart.data.labels.push(time);
+  chart.data.datasets[0].data.push(data.temp);
+  chart.data.datasets[1].data.push(gas);
+
+  if (chart.data.labels.length > 20) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+    chart.data.datasets[1].data.shift();
+  }
+
+  chart.update();
 });
 </script>
 
