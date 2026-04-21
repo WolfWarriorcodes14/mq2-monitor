@@ -86,7 +86,7 @@ button {
   <div class="card"><h3>Status</h3><div id="status" class="value">--</div></div>
 </div>
 
-<!-- 🔊 LOCAL AUDIO FILE -->
+<!-- 🔊 LOCAL AUDIO -->
 <audio id="siren" src="alarm_clock.ogg" preload="auto"></audio>
 
 <script>
@@ -100,23 +100,25 @@ const db = firebase.database();
 
 let audioUnlocked = false;
 
-// 🔓 UNLOCK AUDIO (WORKS)
+// 🔓 AUDIO UNLOCK (FINAL FIX)
 function unlockAudio() {
   const siren = document.getElementById("siren");
 
+  siren.muted = true;   // trick
   siren.play().then(() => {
     siren.pause();
     siren.currentTime = 0;
-    audioUnlocked = true;
+    siren.muted = false;
 
+    audioUnlocked = true;
     alert("✅ Sound Enabled");
   }).catch((e) => {
-    console.log(e);
-    alert("❌ Audio failed");
+    console.log("Unlock error:", e);
+    alert("❌ Click again");
   });
 }
 
-// 🔄 REALTIME DATA
+// 🔄 REALTIME FIREBASE DATA
 db.ref("sensor").on("value", (snap) => {
   const data = snap.val();
   if (!data) return;
@@ -131,25 +133,25 @@ db.ref("sensor").on("value", (snap) => {
   const statusEl = document.getElementById("status");
   const siren = document.getElementById("siren");
 
-  // 🔥 FIRE CONDITION
+  // 🔥 FIRE
   if (data.temp >= 40 && gas >= 600) {
     statusEl.innerText = "🔥 FIRE ALERT";
     statusEl.className = "value fire";
 
-    if (audioUnlocked) {
+    if (audioUnlocked && siren.paused) {
       siren.loop = true;
-      siren.play().catch(()=>{});
+      siren.play().catch(e => console.log("Play error:", e));
     }
   }
 
-  // ⚠ GAS CONDITION
+  // ⚠ GAS
   else if (gas >= 600) {
     statusEl.innerText = "⚠ GAS LEAK";
     statusEl.className = "value gas";
 
-    if (audioUnlocked) {
+    if (audioUnlocked && siren.paused) {
       siren.loop = true;
-      siren.play().catch(()=>{});
+      siren.play().catch(e => console.log("Play error:", e));
     }
   }
 
@@ -158,8 +160,10 @@ db.ref("sensor").on("value", (snap) => {
     statusEl.innerText = "✅ NORMAL";
     statusEl.className = "value normal";
 
-    siren.pause();
-    siren.currentTime = 0;
+    if (!siren.paused) {
+      siren.pause();
+      siren.currentTime = 0;
+    }
   }
 });
 </script>
