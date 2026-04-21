@@ -1,24 +1,45 @@
+// ===== IMPORTS =====
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const { SerialPort } = require("serialport");
+const { ReadlineParser } = require("@serialport/parser-readline");
 
+// ===== SETUP =====
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve frontend
+// ===== CONFIG =====
+const SERIAL_PORT = "/dev/ttyACM0"; // Ubuntu
+const BAUD_RATE = 9600;
+const PORT = 3000;
+
+// ===== SERIAL =====
+const port = new SerialPort({
+  path: SERIAL_PORT,
+  baudRate: BAUD_RATE,
+});
+
+const parser = port.pipe(new ReadlineParser({ delimiter: "\r\n" }));
+
+// ===== STATIC =====
 app.use(express.static("public"));
 
-// Dummy sensor data (for cloud demo)
-setInterval(() => {
-  const a0 = Math.floor(Math.random() * 800);
-  const d0 = a0 > 400 ? 1 : 0;
+// ===== READ JSON DATA =====
+parser.on("data", (data) => {
+  try {
+    const jsonData = JSON.parse(data);
 
-  io.emit("sensorData", { a0, d0 });
-}, 2000);
+    io.emit("sensorData", jsonData);
 
-// Start server
-const PORT = process.env.PORT || 3000;
+    console.log("📡", jsonData);
+  } catch (err) {
+    console.log("⚠ Invalid JSON:", data);
+  }
+});
+
+// ===== START =====
 server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

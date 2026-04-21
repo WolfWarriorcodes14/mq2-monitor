@@ -1,63 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>MQ2 Monitor</title>
+<title>🔥 Smart Fire & Gas Monitor</title>
 <script src="/socket.io/socket.io.js"></script>
 
 <style>
 body {
   margin: 0;
   font-family: 'Segoe UI';
-  background: linear-gradient(135deg, #1f4037, #99f2c8);
+  background: linear-gradient(135deg, #141e30, #243b55);
   color: white;
   text-align: center;
 }
 
 h1 {
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
 .container {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-  margin-top: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 30px;
 }
 
 .card {
   background: rgba(255,255,255,0.1);
-  padding: 30px;
+  padding: 25px;
   border-radius: 20px;
-  width: 250px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
 }
 
 .value {
-  font-size: 2.5rem;
-  margin: 10px 0;
+  font-size: 2rem;
+  margin-top: 10px;
 }
 
-.safe { color: #00ffcc; }
-.danger { color: red; }
+.status {
+  margin-top: 15px;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.normal { color: #00ffcc; }
+.gas { color: orange; }
+.fire { color: red; animation: blink 1s infinite; }
+
+@keyframes blink {
+  50% { opacity: 0.4; }
+}
 </style>
 </head>
 
 <body>
 
-<h1>🔥 MQ2 Gas Monitoring System</h1>
+<h1>🔥 Smart Fire & Gas Monitoring System</h1>
 
 <div class="container">
 
   <div class="card">
-    <h2>Analog (A0)</h2>
-    <div id="a0" class="value">--</div>
+    <h3>MQ2 Sensor 1</h3>
+    <div id="mq2_1" class="value">--</div>
   </div>
 
   <div class="card">
-    <h2>Digital (D0)</h2>
-    <div id="d0" class="value">--</div>
-    <div id="status">Checking...</div>
+    <h3>MQ2 Sensor 2</h3>
+    <div id="mq2_2" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <h3>Average Gas</h3>
+    <div id="avgGas" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <h3>Temperature</h3>
+    <div id="temp" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <h3>Humidity</h3>
+    <div id="hum" class="value">--</div>
+  </div>
+
+  <div class="card">
+    <h3>Status</h3>
+    <div id="status" class="status">--</div>
   </div>
 
 </div>
@@ -66,17 +95,22 @@ h1 {
 const socket = io();
 
 socket.on("sensorData", (data) => {
-  document.getElementById("a0").innerText = data.a0;
-  document.getElementById("d0").innerText = data.d0;
+  document.getElementById("mq2_1").innerText = data.mq2_1;
+  document.getElementById("mq2_2").innerText = data.mq2_2;
+  document.getElementById("avgGas").innerText = data.avgGas;
+  document.getElementById("temp").innerText = data.temp + " °C";
+  document.getElementById("hum").innerText = data.hum + " %";
 
-  let status = document.getElementById("status");
+  let statusEl = document.getElementById("status");
 
-  if (data.d0 === 1) {
-    status.innerText = "Gas Detected 🚨";
-    status.className = "danger";
-  } else {
-    status.innerText = "Safe ✅";
-    status.className = "safe";
+  statusEl.innerText = data.status;
+
+  if (data.status === "NORMAL") {
+    statusEl.className = "status normal";
+  } else if (data.status === "GAS_LEAK") {
+    statusEl.className = "status gas";
+  } else if (data.status === "FIRE") {
+    statusEl.className = "status fire";
   }
 });
 </script>
